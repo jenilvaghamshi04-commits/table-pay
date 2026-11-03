@@ -1,4 +1,8 @@
 *
 !Dockerfile
+!package.json
 !index.html
-!server.py
+!app-server/
+!app-server/**
+!drizzle/
+!drizzle/**
