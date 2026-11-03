@@ -1,21 +1,27 @@
 # Salon Desk
 
-Responsive salon management demo with customer records, barber and service selection, discounts, saved invoices, CSV export, print/PDF, and WhatsApp sharing.
+Salon management demo: customer records, barber/service selection, discounts, invoices, CSV export, PDF printing, and WhatsApp sharing.
 
-## Run locally
+## Existing Render Docker service
 
-Open `index.html` in a browser, or run `python3 -m http.server 8000` and visit http://localhost:8000.
+The repository now includes a Dockerfile and dependency-free HTTP server. In the existing service settings:
 
-## Deploy on Render
+- Branch: main
+- Root Directory: blank (repository root)
+- Dockerfile Path: ./Dockerfile
+- Docker Command: blank (use the image CMD)
+- Health Check Path: /health
 
-Use the repository's `render.yaml` with Render Blueprints, or create a Static Site with:
+Choose Manual Deploy > Deploy latest commit. The server binds to 0.0.0.0 and reads Render's PORT environment variable, defaulting to 10000. No build or start command override is required. For a native Python web service instead, use start command `python server.py`.
 
-- Build command: `mkdir -p dist && cp index.html dist/index.html`
-- Publish directory: `dist`
-- No start command is needed.
+## Static Site alternative
 
-Deploy: https://dashboard.render.com/select-repo?type=blueprint&repo=https://github.com/jenilvaghamshi04-commits/table-pay
+The included render.yaml still supports a Static Site Blueprint, with build command `mkdir -p dist && cp index.html dist/index.html` and publish directory `dist`. Static Sites need no start command. Choose either deployment approach; a separate site is not needed to fix the existing Docker service.
+
+## Local use
+
+Run `python3 server.py`, then visit http://localhost:10000. Or open index.html directly.
 
 ## Demo limitations
 
-Records persist in browser localStorage only. Different browsers, devices, and domains have separate records. Clearing browser storage deletes them. This demo has no server database, authentication, automatic WhatsApp delivery, or tax calculation. WhatsApp sharing opens a prepared message that the user reviews and sends. Print / Save PDF uses the browser print dialog. Do not use for production customer records until access controls, backups, and durable server storage are implemented.
+Records stay in localStorage in the browser where they were entered. Devices and domains do not share records. There is no server database, authentication, automatic WhatsApp delivery, or tax calculation. WhatsApp opens a prepared invoice for manual sending. Print / Save PDF uses the browser print dialog.
