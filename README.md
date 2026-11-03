@@ -48,3 +48,9 @@ Old browser records are not automatically attached to a new client. In the owner
 - Invoice links remain self-contained customer snapshots with masked phone numbers. Already-shared snapshots cannot be revoked or edited by suspending the salon. Only workspace access is revoked. Keep customer links private.
 - WhatsApp opens a prepared message for manual sending. There is no automatic WhatsApp delivery, subscription billing integration, tax calculation, or verified payment gateway.
 - Back up the production database and test recovery before onboarding paying clients. Keep Node runtime and dependencies updated.
+
+## Cloudflare Git deployment
+
+The `table-pay` Worker uses `wrangler.jsonc` with binding `DB` connected to the existing `tablepay` D1 database. Build command: `npm run build`. Deploy command: `npx wrangler deploy`. Production branch: `main`; root directory: `/`.
+
+The initial database tables were created manually in the D1 console. Do not replay the initial CREATE TABLE migration against this populated schema. Configure runtime secrets `OWNER_EMAIL` and `OWNER_PASSWORD` on the Worker (Production), then open `/admin` using those owner credentials. The initial password must contain at least 12 characters and must be changed at first login. Do not commit secret values.
