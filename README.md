@@ -13,19 +13,19 @@ One owner console, separate salon client logins, server-enforced tenant access, 
 
 The hosted app uses Cloudflare D1. Owner identity uses the platform's authenticated ChatGPT identity; client passwords use salted PBKDF2 hashes. Server sessions are hashed in storage, sent in HttpOnly/SameSite cookies, and validated against account/workspace status on every API call. State writes use optimistic versions and pause on conflicts rather than silently overwrite another device.
 
-## Render deployment — important migration
+## Free Render deployment with Cloudflare D1
 
-The old browser-only Python/static demo has been replaced by a Node 24 Docker backend with SQLite. Do not redeploy a live business database onto Render's ephemeral filesystem.
+Render serves the frontend and forwards same-origin API requests to the existing Cloudflare Worker. All accounts, sessions and salon records remain in Cloudflare D1; Render needs no disk. This shares the Cloudflare database instead of creating a second one.
 
 1. Use Docker runtime with Dockerfile `./Dockerfile`, build context `.`, and no Docker command override.
-2. Attach a persistent disk mounted at `/var/data` (requires a paid Render service).
-3. Set environment variables `DATA_DIR=/var/data`, `OWNER_EMAIL` to your owner login email, and `OWNER_PASSWORD` to a unique password of at least 12 characters. Never commit actual passwords.
+2. Select Render's Free instance. No persistent disk is needed.
+3. Set `SALON_API_ORIGIN=https://table-pay.jenilvaghamshi04.workers.dev` (also the Render default in code).
 4. Set health check path `/health` and deploy the latest commit.
-5. Open `/admin` and sign in with the configured owner credentials. First login requires a new password. The environment bootstrap password is only used to create the first owner; changing it later does not reset the database password.
+5. Open `/admin`. Use the credentials created in the Cloudflare database. Configure initial `OWNER_EMAIL` and `OWNER_PASSWORD` secrets on Cloudflare, not Render. The password must have at least 12 characters; first login requires a replacement. Changing secrets does not reset an existing account.
 
-`render.yaml` declares a Starter service and a 1 GB persistent disk. Existing services need their disk and environment configured in Render; a Git push alone does not apply Blueprint settings. This repository does not automatically upgrade your billing plan.
+`render.yaml` declares a Free service without a disk. Existing services must select Free in Render themselves; pushing code does not change billing. The Cloudflare backend must stay deployed and healthy. Free hosting remains subject to provider quotas and idle startup delays.
 
-Sites and Render each have their own independent database. Choose one production deployment per business network. Client accounts created on one host are not copied to another host.
+The Render process never opens a local database. Existing local Render SQLite records are not automatically migrated into D1. Preserve/export any existing data before switching. Direct Cloudflare and Render logins use separate browser cookies but access the same accounts and records.
 
 ## Local development
 
