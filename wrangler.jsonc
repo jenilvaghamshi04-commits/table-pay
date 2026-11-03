@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "salon-desk",
+  "main": "worker/cloudflare.js",
+  "compatibility_date": "2026-01-01",
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "salon-desk-db",
+      "database_id": "REPLACE_WITH_YOUR_CLOUDFLARE_DATABASE_ID",
+      "migrations_dir": "drizzle"
+    }
+  ]
+}
