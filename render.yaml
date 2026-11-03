@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: salon-desk
+    runtime: static
+    buildCommand: mkdir -p dist && cp index.html dist/index.html
+    staticPublishPath: ./dist
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
