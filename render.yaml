@@ -2,18 +2,10 @@ services:
   - type: web
     name: salon-desk
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health
     envVars:
-      - key: OWNER_EMAIL
-        sync: false
-      - key: OWNER_PASSWORD
-        sync: false
-      - key: DATA_DIR
-        value: /var/data
-    disk:
-      name: salon-data
-      mountPath: /var/data
-      sizeGB: 1
+      - key: SALON_API_ORIGIN
+        value: https://table-pay.jenilvaghamshi04.workers.dev
