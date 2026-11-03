@@ -6,6 +6,3 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health
-    envVars:
-      - key: SALON_API_ORIGIN
-        value: https://table-pay.jenilvaghamshi04.workers.dev
