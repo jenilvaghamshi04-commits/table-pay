@@ -8,6 +8,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const dir=process.env.DATA_DIR||path.join(root,'data');
 if(process.env.RENDER&&!process.env.DATA_DIR)throw Error('Set DATA_DIR to a mounted persistent disk before starting.');
 if(process.env.RENDER&&!existsSync(dir))throw Error('Persistent DATA_DIR does not exist. Attach the Render disk before starting.');
+if(process.env.RENDER){const mounts=readFileSync('/proc/self/mountinfo','utf8').split('\n').map(line=>line.split(' ')[4]).filter(Boolean);if(!mounts.includes(path.resolve(dir)))throw Error('DATA_DIR must be the persistent disk mount path. An ordinary container folder is not durable.');}
 mkdirSync(dir,{recursive:true});
 const sqlite=new DatabaseSync(path.join(dir,'salon.sqlite'));sqlite.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
 sqlite.exec('CREATE TABLE IF NOT EXISTS schema_versions (name TEXT PRIMARY KEY)');
