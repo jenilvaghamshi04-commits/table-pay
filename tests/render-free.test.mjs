@@ -1,19 +1,19 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
-import {mkdtempSync,existsSync,rmSync} from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import {once} from 'node:events';
-test('Render free mode uses Cloudflare without a local database',async()=>{
- const dir=mkdtempSync(path.join(os.tmpdir(),'salon-free-')),port=21500+Math.floor(Math.random()*1000),base='http://127.0.0.1:'+port;
- const mock=`globalThis.fetch=async(url,options)=>{if(url.includes('/api/unavailable'))throw Error('offline');return new Response(JSON.stringify({url,origin:options.headers.get('Origin'),cookie:options.headers.get('Cookie'),identity:options.headers.get('oai-authenticated-user-email'),body:options.body?.toString()}),{headers:{'Content-Type':'application/json','Set-Cookie':'salon_session=test; HttpOnly; Path=/; SameSite=Strict; Secure'}})};await import('./app-server/node.mjs');`;
- const child=spawn(process.execPath,['--input-type=module','-e',mock],{env:{...process.env,RENDER:'true',PORT:String(port),DATA_DIR:path.join(dir,'missing')},stdio:['ignore','pipe','pipe']});let logs='';child.stderr.on('data',b=>logs+=b);child.stdout.on('data',b=>logs+=b);
+import vm from 'node:vm';
+test('Render opens without login, disk or external API',async()=>{
+ const port=22500+Math.floor(Math.random()*1000),base='http://127.0.0.1:'+port;
+ const child=spawn(process.execPath,['app-server/node.mjs'],{env:{...process.env,RENDER:'true',PORT:String(port),DATA_DIR:'/not-mounted'},stdio:['ignore','pipe','pipe']});
  try{
-  let ready=false;for(let i=0;i<100;i++){try{if((await fetch(base+'/health')).ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,30))}assert(ready,logs);
-  assert.equal((await fetch(base+'/admin')).status,200);assert(!existsSync(path.join(dir,'missing')));
-  const rejected=await fetch(base+'/api/auth/login',{method:'POST',headers:{Origin:'https://evil.example','Content-Type':'application/json'},body:'{}'});assert.equal(rejected.status,403);
-  const r=await fetch(base+'/api/auth/login',{method:'POST',headers:{Origin:'https://127.0.0.1:'+port,'Content-Type':'application/json',Cookie:'salon_session=abc','oai-authenticated-user-email':'spoof@example.test'},body:'{}'});assert.equal(r.status,200);assert(r.headers.get('set-cookie').includes('HttpOnly'));const data=await r.json();assert.equal(data.url,'https://table-pay.jenilvaghamshi04.workers.dev/api/auth/login');assert.equal(data.origin,'https://table-pay.jenilvaghamshi04.workers.dev');assert.equal(data.cookie,'salon_session=abc');assert.equal(data.identity,null);assert.equal(data.body,'{}');
-  assert.equal((await fetch(base+'/api/unavailable')).status,502);
- }finally{const exited=once(child,'exit');child.kill();await exited;rmSync(dir,{recursive:true,force:true})}
+  let ready=false;for(let i=0;i<100;i++){try{if((await fetch(base+'/health')).ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,30))}assert(ready);
+  const r=await fetch(base+'/admin');assert.equal(r.status,200);const html=await r.text();assert(!html.includes("request('/api/auth/login'"));assert(!html.includes('SALON_API_ORIGIN'));assert(html.includes('Records stay in this browser'));assert(!html.includes('sync across its signed-in devices'));
+  assert.equal((await fetch(base+'/api/workspace')).status,404);assert.equal((await fetch(base+'/api/auth/login',{method:'POST'})).status,405);
+  const app=html.match(/<script id="salonAppCode" type="text\/plain">([\s\S]*?)<\/script>/)[1];new vm.Script(app);
+  const boot=html.slice(html.lastIndexOf('<script>')+8,html.lastIndexOf('</script>'));let injected='';const elements=new Map(),values=new Map();
+  const element=id=>{if(!elements.has(id))elements.set(id,{textContent:id==='salonAppCode'?app:'',remove(){this.removed=true}});return elements.get(id)};
+  const context={window:{},document:{getElementById:element,querySelectorAll:()=>[],createElement:()=>({}),body:{classList:{remove(){},add(){}},appendChild(s){injected=s.textContent}}},localStorage:{getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v)},alert(){throw Error('Unexpected storage error')}};
+  vm.runInNewContext(boot,context);assert.equal(injected,app);assert(element('authRoot').removed);assert.equal(context.window.__IS_OWNER,false);context.window.__CLOUD_STORAGE.setItem('salondesk-visits-v1','[]');assert.equal(values.get('salondesk-visits-v1'),'[]');assert.equal(element('syncState').textContent,'Saved in this browser');
+ }finally{const ended=once(child,'exit');child.kill();await ended}
 });
